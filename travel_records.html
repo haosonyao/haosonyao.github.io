@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人旅遊足跡專業儀表板 - 多使用者切換版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        /* 顏色定義 - 高級金屬與沉穩莫蘭迪 */
+        :root {
+            /* 顏色定義 - 高級金屬與沉穩莫蘭迪 */
+            --banner-dark: #1f272a;
+            --banner-highlight: #3c4a52;
+            --primary-color: #4A5552;
+            --morandi-base: #B0C4B4;
+            --accent-color: #D4AF37;
+            --background-color: #F8F9FA;
+            --card-color: #FFFFFF;
+            --text-color: #333333;
+            --subtle-text-color: #6c757d;
+            --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 50px auto;
+            padding: 0 30px;
+        }
+
+        /* 頂部 Banner - 金屬髮絲紋質感 */
+        header {
+            background: var(--banner-dark);
+            background-image: repeating-linear-gradient(
+                90deg, var(--banner-dark) 0px, var(--banner-dark) 1px, var(--banner-highlight) 1px, var(--banner-highlight) 2px
+            );
+            background-size: 100% 2px; 
+            padding: 40px 30px;
+            text-align: center;
+            margin-bottom: 40px;
+            border-radius: 12px;
+            border-top: 2px solid #555;
+            border-bottom: 2px solid #555;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            color: var(--card-color);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px; /* 為選擇器騰出空間 */
+        }
+        
+        header h1 i {
+            margin-right: 20px;
+            color: var(--accent-color);
+            stroke-width: 1.5;
+        }
+        
+        /* 使用者切換控制項樣式 */
+        .user-control {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-control label {
+            font-size: 1.1em;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            margin-right: 15px;
+        }
+
+        .user-control select {
+            padding: 8px 15px;
+            border-radius: 6px;
+            background-color: var(--banner-highlight);
+            color: white;
+            border: 1px solid var(--morandi-base);
+            font-size: 1em;
+            font-weight: 500;
+            appearance: none; /* 移除默認箭頭 */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B0C4B4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+            cursor: pointer;
+        }
+
+        /* 數據卡片 (略) */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-subtle);
+            border-bottom: 4px solid var(--morandi-base);
+            transition: all 0.3s ease;
+        }
+
+        .stat-value {
+            font-size: 3.2em;
+            font-weight: 700;
+            color: var(--primary-color);
+            line-height: 1;
+        }
+        
+        .stat-value.highlight {
+            color: var(--accent-color);
+        }
+
+        /* 內容區塊 (略) */
+        .section {
+            background-color: var(--card-color);
+            padding: 35px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-subtle);
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--morandi-base);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section h2 i {
+            margin-right: 10px;
+            color: var(--morandi-base);
+        }
+
+        /* 表單樣式 (略) */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px 30px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.95em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dddddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            background-color: #fcfcfc;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--morandi-base);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(176, 196, 180, 0.3);
+        }
+        
+        .btn-primary, .btn-secondary, .btn-data {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.0em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s;
+            margin-left: 10px;
+        }
+        
+        .btn-primary {
+            background-color: var(--morandi-base);
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #92a898;
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background-color: #e9ecef;
+            color: var(--subtle-text-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #dee2e6;
+        }
+
+        .btn-data {
+            background-color: #f0f0f0;
+            color: var(--primary-color);
+        }
+        
+        .btn-data:hover {
+            background-color: #e2e6ea;
+        }
+
+        /* 表格內動作按鈕 (略) */
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            margin: 0 5px;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        
+        .action-btn:hover {
+            color: var(--accent-color);
+        }
+
+        /* 地圖區域 (略) */
+        #world-map-placeholder {
+            min-height: 450px;
+            background-color: #2c3e50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #ecf0f1;
+            border: 2px solid var(--morandi-base);
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        #world-map-placeholder i {
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 5px var(--accent-color));
+        }
+        
+        .table-container {
+             max-height: 450px; 
+             overflow-y: auto;
+             border: 1px solid #eee;
+             border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1><i data-feather="compass" style="width: 40px; height: 40px;"></i> YAO滾世界足跡紀錄</h1>
+        
+        <div class="user-control">
+            <label for="user-select">當前使用者:</label>
+            <select id="user-select" onchange="switchUser(this.value)">
+                </select>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-header">
+                <i data-feather="clock" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                <h3>總旅程天數</h3>
+            </div>
+            <div class="stat-value highlight" id="total-days">0</div>
+            <p>累積旅行總日數 (天)</p>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <i data-feather="globe" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                <h3>去過國家數</h3>
+            </div>
+            <div class="stat-value" id="unique-countries">0</div>
+            <p>已探索的不同國家總數</p>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <i data-feather="map" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                <h3>去過城市數</h3>
+            </div>
+            <div class="stat-value" id="unique-cities">0</div>
+            <p>已探索的不同城市總數</p>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <i data-feather="users" style="width: 18px; height: 18px; margin-right: 8px;"></i>
+                <h3>旅伴總人數</h3>
+            </div>
+            <div class="stat-value" id="unique-companions">0</div>
+            <p>一起旅行過的不同旅伴總數</p>
+        </div>
+    </div>
+
+    <div class="section input-section">
+        <h2><i data-feather="plus-circle" id="form-icon"></i> <span id="form-title">新增旅程紀錄</span> (當前身分為 <span id="current-user-display" style="color: var(--morandi-base); font-weight: 600;">NEIL</span>)</h2>
+        <form id="add-record-form">
+            <input type="hidden" id="record-id-to-edit" value="">
+
+            <div class="form-grid">
+                <div class="form-group"><label for="new-year">年份</label><input type="number" id="new-year" value="2025" min="1900" max="2100" required></div>
+                <div class="form-group"><label for="new-start-date">出發日期</label><input type="date" id="new-start-date" required></div>
+                <div class="form-group"><label for="new-end-date">回程日期</label><input type="date" id="new-end-date" required></div>
+                <div class="form-group"><label for="new-days">旅程天數 (自動計算)</label><input type="number" id="new-days" readonly></div> 
+                <div class="form-group"><label for="new-countries">國家清單 (逗號分隔)</label><input type="text" id="new-countries" placeholder="e.g., 日本, 韓國" required></div>
+                <div class="form-group"><label for="new-cities">城市清單 (逗號分隔)</label><input type="text" id="new-cities" placeholder="e.g., 東京, 富士山, 首爾" required></div>
+                <div class="form-group"><label for="new-companions">旅伴 (逗號分隔, 獨旅可不填)</label><input type="text" id="new-companions" placeholder="e.g., Tina, Titan"></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-data" onclick="importData()">
+                    <i data-feather="upload" style="width: 1em; height: 1em; margin-right: 5px;"></i> 匯入紀錄
+                </button>
+                <input type="file" id="import-file" accept="application/json" style="display: none;" onchange="handleFileImport(this.files)">
+                
+                <button type="button" class="btn-data" onclick="exportData()">
+                    <i data-feather="download" style="width: 1em; height: 1em; margin-right: 5px;"></i> 匯出紀錄
+                </button>
+
+                <button type="button" class="btn-secondary" id="cancel-edit-btn" style="display: none;">取消編輯</button>
+                <button type="submit" class="btn-primary" id="submit-btn">新增紀錄</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="section chart-section">
+        <h2><i data-feather="trending-up"></i> 專業數據視覺化與排名分析</h2>
+        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
+            <div class="card" id="annualChartCard" style="border: none; box-shadow: none;"><canvas id="annualTrendChart" style="min-height: 280px;"></canvas></div>
+            <div class="card" id="countryChartCard" style="border: none; box-shadow: none;"><canvas id="countryRankingChart" style="min-height: 280px;"></canvas></div>
+            <div class="card" id="cityChartCard" style="border: none; box-shadow: none;"><canvas id="cityRankingChart" style="min-height: 280px;"></canvas></div>
+            <div class="card" id="companionChartCard" style="border: none; box-shadow: none;"><canvas id="companionRankingChart" style="min-height: 280px;"></canvas></div>
+        </div>
+    </div>
+
+
+    <div class="section records-section">
+        <h2><i data-feather="list"></i> 旅程詳細紀錄 (可編輯/刪除)</h2>
+        <div class="table-container">
+            <table class="records-table" id="travel-records-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>年份</th>
+                        <th>出發日期</th>
+                        <th>回程日期</th>
+                        <th>天數</th>
+                        <th>國家清單</th>
+                        <th>城市清單</th>
+                        <th>旅伴</th>
+                        <th style="width: 100px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="records-tbody">
+                    <tr><td colspan="9" style="text-align: center; color: var(--subtle-text-color); padding: 20px;">目前無任何旅程紀錄，請從上方表單開始輸入。</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="section map-section">
+        <h2><i data-feather="map-pin"></i> 全球足跡註記地圖 (待擴展的高級功能)</h2>
+        <div id="world-map-placeholder">
+            <i data-feather="globe" style="width: 50px; height: 50px;"></i>
+            <h3 style="color: var(--card-color); font-weight: 500;">高級地圖服務整合區</h3>
+            <p style="color: var(--morandi-base); margin-top: 10px;">此處為高質感視覺化容器，若需實現點選國家/城市功能，請依循以下指引：</p>
+            
+            <div id="map-guidance">
+                <p style="color: #F8F9FA; margin-bottom: 5px;">**整合地圖功能指引：**</p>
+                <p style="color: #C0C0C0; margin: 0;">1. **地圖庫導入：** 導入 Leaflet 或 Google Maps JavaScript 函式庫。</p>
+                <p style="color: #C0C0C0; margin: 0;">2. **地圖初始化：** 在此容器內 (`#world-map-placeholder`) 創建地圖實例。</p>
+                <p style="color: #C0C0C0; margin: 0;">3. **數據整合：** 獲得城市或國家座標資料（通常需要 Geocoding 服務或現成的 JSON 檔案）。</p>
+                <p style="color: #C0C0C0; margin: 0;">4. **繪製與互動：** 根據您輸入的紀錄繪製地圖標記，並設定點擊標記時的事件處理，以實現查看次數等互動。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ----------------------------------------------------------------------------------
+    // 步驟 1: 數據模型與全域狀態
+    // ----------------------------------------------------------------------------------
+    let currentRecords = [];
+    let nextSerialNumber = 1; 
+    let charts = {}; 
+
+    // 新增多使用者全域狀態
+    const USERS = ['NEIL', 'TINA', 'TITAN', 'MARIE', 'SAUL'];
+    let currentUser = USERS[0]; // 預設使用者為 NEIL
+
+
+    // ----------------------------------------------------------------------------------
+    // 步驟 2: 核心數據計算函數
+    // ----------------------------------------------------------------------------------
+
+    function splitItems(str) {
+        if (!str || str.toLowerCase() === 'nan' || str.trim() === '') return [];
+        return str.toString().split(',')
+            .map(item => item.trim().replace(/\"/g, ''))
+            .filter(item => item !== '');
+    }
+
+    function calculateStats(records) {
+        // --- 修正: 只計算當前使用者的紀錄 ---
+        const filteredRecords = records.filter(record => record.user === currentUser);
+        
+        let totalDays = 0;
+        let allCountries = new Set();
+        let allCities = new Set();
+        let allCompanions = new Set();
+        let countryCounts = {};
+        let cityCounts = {};
+        let companionCounts = {};
+        let annualStatsMap = {};
+
+        // 確保 nextSerialNumber 涵蓋所有使用者，而不只是當前使用者
+        let maxId = 0;
+        records.forEach(record => {
+             maxId = Math.max(maxId, record['流水號']);
+        });
+        nextSerialNumber = maxId + 1;
+        
+        // 開始針對過濾後的紀錄計算統計數據
+        for (const record of filteredRecords) {
+            const year = record['年份'];
+            const days = record['旅程天數'];
+            totalDays += days;
+
+            const countries = splitItems(record['國家清單']);
+            const cities = splitItems(record['城市清單']);
+            const companions = splitItems(record['旅伴']);
+
+            if (!annualStatsMap[year]) {
+                annualStatsMap[year] = { year: year, total_days: 0, countries_set: new Set(), cities_set: new Set() };
+            }
+            annualStatsMap[year].total_days += days;
+
+            countries.forEach(c => {
+                allCountries.add(c);
+                annualStatsMap[year].countries_set.add(c);
+                countryCounts[c] = (countryCounts[c] || 0) + 1;
+            });
+
+            cities.forEach(c => {
+                allCities.add(c);
+                annualStatsMap[year].cities_set.add(c);
+                cityCounts[c] = (cityCounts[c] || 0) + 1;
+            });
+
+            companions.forEach(c => {
+                allCompanions.add(c);
+                companionCounts[c] = (companionCounts[c] || 0) + 1;
+            });
+        }
+
+        const annualStatsList = Object.values(annualStatsMap).map(item => ({
+            year: item.year,
+            total_days: item.total_days,
+            unique_countries: item.countries_set.size,
+            unique_cities: item.cities_set.size,
+        }));
+        annualStatsList.sort((a, b) => a.year - b.year);
+
+        return {
+            overall_stats: {
+                total_travel_days: totalDays,
+                unique_countries: allCountries.size,
+                unique_cities: allCities.size,
+                unique_companions: allCompanions.size,
+            },
+            annual_stats: annualStatsList,
+            rankings: {
+                country_counts: countryCounts,
+                city_counts: cityCounts,
+                companion_counts: companionCounts,
+            }
+        };
+    }
+
+    // ----------------------------------------------------------------------------------
+    // 步驟 3: DOM 操作與渲染
+    // ----------------------------------------------------------------------------------
+
+    function updateOverallStats(stats) {
+        document.getElementById('total-days').textContent = stats.overall_stats.total_travel_days.toLocaleString();
+        document.getElementById('unique-countries').textContent = stats.overall_stats.unique_countries.toLocaleString();
+        document.getElementById('unique-cities').textContent = stats.overall_stats.unique_cities.toLocaleString();
+        document.getElementById('unique-companions').textContent = stats.overall_stats.unique_companions.toLocaleString();
+        // 更新使用者顯示
+        document.getElementById('current-user-display').textContent = currentUser;
+    }
+    
+    function varToColor(varName, defaultValue) {
+        const style = getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();
+        if (style.startsWith('#')) return style;
+        if (style.startsWith('rgb')) return style;
+        return defaultValue;
+    }
+
+    function renderCharts(stats) {
+        Object.values(charts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        charts = {};
+
+        const primaryColor = varToColor('primary-color', 'rgb(74, 85, 82)');
+        const morandiColor = varToColor('morandi-base', 'rgb(176, 196, 180)');
+        const accentColor = varToColor('accent-color', 'rgb(212, 175, 55)');
+        const tertiaryColor = 'rgb(159, 192, 179)'; 
+
+        // --- Annual Trend Chart ---
+        const annualLabels = stats.annual_stats.map(s => s.year);
+        const annualDays = stats.annual_stats.map(s => s.total_days);
+        
+        const annualChartContainer = document.getElementById('annualChartCard');
+
+        if (annualDays.length === 0) {
+             annualChartContainer.innerHTML = `<div style="text-align: center; color: var(--subtle-text-color); padding: 50px;">請新增紀錄以顯示年度趨勢圖。</div>`;
+        } else {
+            annualChartContainer.innerHTML = `<canvas id="annualTrendChart" style="min-height: 280px;"></canvas>`;
+            const canvasElement = document.getElementById('annualTrendChart');
+
+             charts.annualTrend = new Chart(canvasElement.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: annualLabels,
+                    datasets: [{
+                        label: '年度總天數 (天)',
+                        data: annualDays,
+                        borderColor: primaryColor,
+                        backgroundColor: `rgba(${morandiColor.match(/\d+/g).join(', ')}, 0.4)`,
+                        pointBackgroundColor: primaryColor,
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                        fill: true
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: { display: true, text: '年度旅遊總天數趨勢', color: primaryColor, font: { size: 16, weight: '600' } },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: '年份', color: primaryColor }, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        y1: { title: { display: true, text: '總天數 (天)', color: primaryColor }, grid: { color: 'rgba(0, 0, 0, 0.05)' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // --- Ranking Charts (排名圖表) ---
+        function createBarChart(containerId, elementId, title, dataObject, color) {
+            const sortedEntries = Object.entries(dataObject).sort(([, a], [, b]) => b - a).slice(0, 10); 
+            const labels = sortedEntries.map(([label, count]) => label);
+            const data = sortedEntries.map(([label, count]) => count);
+            
+            const container = document.getElementById(containerId); 
+            
+            if (data.length === 0) {
+                 container.innerHTML = `<div style="text-align: center; color: var(--subtle-text-color); padding: 50px;">請新增紀錄以顯示 ${title} 排名。</div>`;
+                 return;
+            }
+
+            container.innerHTML = `<canvas id="${elementId}" style="min-height: 280px;"></canvas>`;
+            const canvasElement = document.getElementById(elementId);
+
+
+            charts[elementId] = new Chart(canvasElement.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '次數',
+                        data: data,
+                        backgroundColor: color,
+                        borderColor: color,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: title, color: primaryColor, font: { size: 16, weight: '600' } }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: '拜訪次數', color: primaryColor }, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        y: { reverse: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }
+                    }
+                }
+            });
+        }
+        
+        createBarChart('countryChartCard', 'countryRankingChart', '國家熱門度排名 (前 10)', stats.rankings.country_counts, morandiColor);
+        createBarChart('cityChartCard', 'cityRankingChart', '城市熱門度排名 (前 10)', stats.rankings.city_counts, tertiaryColor);
+        createBarChart('companionChartCard', 'companionRankingChart', '旅伴次數排名 (前 10)', stats.rankings.companion_counts, accentColor);
+    }
+
+    function renderTable(records) {
+        const tbody = document.getElementById('records-tbody');
+        tbody.innerHTML = '';
+        
+        // --- 修正: 只顯示當前使用者的紀錄 ---
+        const filteredRecords = records.filter(record => record.user === currentUser);
+        
+        if (filteredRecords.length === 0) {
+             tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--subtle-text-color); padding: 20px;">當前使用者 (${currentUser}) 尚無任何旅程紀錄。</td></tr>`;
+             return;
+        }
+
+        const sortedRecords = [...filteredRecords].sort((a, b) => b['流水號'] - a['流水號']);
+
+        sortedRecords.forEach(record => {
+            const row = tbody.insertRow();
+            row.insertCell().textContent = record['流水號'];
+            row.insertCell().textContent = record['年份'];
+            row.insertCell().textContent = record['出發日期'];
+            row.insertCell().textContent = record['回程日期'];
+            row.insertCell().textContent = record['旅程天數'];
+            row.insertCell().textContent = record['國家清單'] || 'N/A';
+            row.insertCell().textContent = record['城市清單'] || 'N/A';
+            row.insertCell().textContent = record['旅伴'] || '(獨旅)';
+            
+            const actionCell = row.insertCell();
+            actionCell.innerHTML = `
+                <button class="action-btn" onclick="editRecord(${record['流水號']})" title="編輯">
+                    <i data-feather="edit-3" style="width: 16px; height: 16px;"></i>
+                </button>
+                <button class="action-btn" onclick="deleteRecord(${record['流水號']})" title="刪除">
+                    <i data-feather="trash-2" style="width: 16px; height: 16px;"></i>
+                </button>
+            `;
+            feather.replace();
+        });
+    }
+
+    // ----------------------------------------------------------------------------------
+    // 步驟 4: 事件處理與持久化功能 (CRUD & Persistence)
+    // ----------------------------------------------------------------------------------
+
+    function calculateDays(start, end) {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (!isNaN(startDate) && !isNaN(endDate) && endDate.getTime() >= startDate.getTime()) {
+            const timeDiff = endDate.getTime() - startDate.getTime();
+            return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; 
+        }
+        return null;
+    }
+
+    function updateDaysInput() {
+        const start = document.getElementById('new-start-date').value;
+        const end = document.getElementById('new-end-date').value;
+        const daysInput = document.getElementById('new-days');
+        const yearInput = document.getElementById('new-year');
+        
+        const calculatedDays = calculateDays(start, end);
+
+        if (calculatedDays !== null) {
+            daysInput.value = calculatedDays;
+            yearInput.value = new Date(start).getFullYear();
+        } else {
+            daysInput.value = '';
+        }
+    }
+    
+    // --- 刪除紀錄 (Delete) ---
+    window.deleteRecord = function(id) {
+        if (!confirm('您確定要刪除這筆流水號 ' + id + ' 的旅程紀錄嗎？此操作將會從所有紀錄中移除這筆數據。')) {
+            return;
+        }
+        
+        currentRecords = currentRecords.filter(record => record['流水號'] !== id);
+        updateAllComponents();
+        alert('紀錄刪除成功！請記得匯出最新數據。');
+    }
+
+    // --- 進入編輯模式 (Edit - Load Data) ---
+    window.editRecord = function(id) {
+        const recordToEdit = currentRecords.find(record => record['流水號'] === id);
+        if (!recordToEdit) return;
+
+        document.getElementById('record-id-to-edit').value = id;
+        document.getElementById('new-year').value = recordToEdit['年份'];
+        document.getElementById('new-start-date').value = recordToEdit['出發日期'];
+        document.getElementById('new-end-date').value = recordToEdit['回程日期'];
+        document.getElementById('new-days').value = recordToEdit['旅程天數'];
+        document.getElementById('new-countries').value = recordToEdit['國家清單'];
+        document.getElementById('new-cities').value = recordToEdit['城市清單'];
+        document.getElementById('new-companions').value = recordToEdit['旅伴'];
+
+        document.getElementById('form-title').textContent = '修改旅程紀錄 (ID: ' + id + ')';
+        document.getElementById('submit-btn').textContent = '儲存修改';
+        document.getElementById('submit-btn').classList.add('highlight');
+        document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+        document.getElementById('form-icon').setAttribute('data-feather', 'edit-3');
+        feather.replace();
+    }
+    
+    // --- 取消編輯模式 ---
+    function cancelEditMode() {
+        document.getElementById('add-record-form').reset();
+        document.getElementById('record-id-to-edit').value = '';
+        document.getElementById('new-days').value = ''; 
+        
+        document.getElementById('form-title').textContent = '新增旅程紀錄';
+        document.getElementById('submit-btn').textContent = '新增紀錄';
+        document.getElementById('submit-btn').classList.remove('highlight');
+        document.getElementById('cancel-edit-btn').style.display = 'none';
+        document.getElementById('form-icon').setAttribute('data-feather', 'plus-circle');
+        feather.replace();
+    }
+
+    // --- 處理新增/修改提交 (Add/Edit Submit) ---
+    document.getElementById('add-record-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const idToEdit = document.getElementById('record-id-to-edit').value;
+        const startDateInput = document.getElementById('new-start-date').value;
+        const endDateInput = document.getElementById('new-end-date').value;
+        const countriesInput = document.getElementById('new-countries').value;
+        const citiesInput = document.getElementById('new-cities').value;
+        const companionsInput = document.getElementById('new-companions').value;
+
+        const calculatedDays = calculateDays(startDateInput, endDateInput);
+
+        if (calculatedDays === null || calculatedDays <= 0) {
+            alert('錯誤：請檢查出發和回程日期是否有效且回程日不早於出發日。');
+            return;
+        }
+        
+        if (!countriesInput || !citiesInput) {
+            alert('錯誤：國家清單和城市清單為必填欄位。');
+            return;
+        }
+        
+        const newRecordData = {
+            '流水號': idToEdit ? parseInt(idToEdit) : nextSerialNumber,
+            '年份': parseInt(document.getElementById('new-year').value),
+            '月份': 'MANUAL', 
+            'user': currentUser, // --- 關鍵：新增使用者標籤 ---
+            '出發日期': startDateInput,
+            '回程日期': endDateInput,
+            '旅程天數': calculatedDays,
+            '國家清單': countriesInput,
+            '城市清單': citiesInput,
+            '旅伴': companionsInput,
+        };
+
+        if (idToEdit) {
+            const index = currentRecords.findIndex(record => record['流水號'] === parseInt(idToEdit));
+            if (index !== -1) {
+                // 必須保留原來的 user 標籤，除非在編輯模式下強制修改
+                newRecordData.user = currentRecords[index].user; 
+                currentRecords[index] = newRecordData;
+                alert('紀錄修改成功！請記得匯出最新數據。');
+            }
+            cancelEditMode();
+        } else {
+            currentRecords.push(newRecordData);
+            // nextSerialNumber 會在 calculateStats 中更新
+            alert('新增紀錄成功！請記得匯出最新數據。');
+        }
+
+        updateAllComponents();
+        this.reset();
+        document.getElementById('new-days').value = '';
+    });
+    
+    document.getElementById('cancel-edit-btn').addEventListener('click', cancelEditMode);
+
+
+    // --- 匯出功能 (Export) ---
+    window.exportData = function() {
+        if (currentRecords.length === 0) {
+            alert('沒有數據可供匯出。');
+            return;
+        }
+        
+        // 匯出所有紀錄，包括 user 標籤
+        const dataStr = JSON.stringify(currentRecords, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = 'family_travel_records_' + new Date().toISOString().slice(0, 10) + '.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        alert('數據已成功匯出為 ' + exportFileDefaultName + '，請妥善保管此檔案。');
+    }
+
+    // --- 匯入功能 (Import) ---
+    window.importData = function() {
+        document.getElementById('import-file').click();
+    }
+    
+    window.handleFileImport = function(files) {
+        if (files.length === 0) return;
+        const file = files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                if (!Array.isArray(importedData)) {
+                    throw new Error("匯入的檔案格式錯誤，預期為紀錄陣列。");
+                }
+                
+                const validatedRecords = importedData.map(r => ({
+                    '流水號': parseInt(r['流水號']),
+                    '年份': parseInt(r['年份']),
+                    '出發日期': r['出發日期'],
+                    '回程日期': r['回程日期'],
+                    '旅程天數': parseInt(r['旅程天數']),
+                    '國家清單': r['國家清單'],
+                    '城市清單': r['城市清單'],
+                    '旅伴': r['旅伴'] || '',
+                    'user': r['user'] && USERS.includes(r['user']) ? r['user'] : USERS[0] // 確保有 user 字段，否則設為 NEIL
+                }));
+
+                currentRecords = validatedRecords;
+                updateAllComponents();
+                alert(`成功匯入 ${currentRecords.length} 筆紀錄！`);
+
+            } catch (error) {
+                console.error("檔案處理錯誤:", error);
+                alert(`匯入檔案失敗：${error.message || '請確保您匯入的是有效的 JSON 檔案。'}`);
+            }
+            document.getElementById('import-file').value = '';
+        };
+
+        reader.readAsText(file);
+    }
+    
+    // --- 使用者切換邏輯 ---
+    window.switchUser = function(newUser) {
+        if (currentUser !== newUser) {
+            currentUser = newUser;
+            updateAllComponents();
+            cancelEditMode(); // 確保切換使用者後退出編輯模式
+        }
+    }
+
+
+    // --- 總體更新函數 ---
+    function updateAllComponents() {
+        // 確保 nextSerialNumber 涵蓋所有紀錄，即使是其他使用者的
+        const updatedStats = calculateStats(currentRecords);
+        updateOverallStats(updatedStats);
+        renderCharts(updatedStats);
+        renderTable(currentRecords);
+    }
+    
+    // 初始化使用者選擇器
+    function initializeUserSelector() {
+        const select = document.getElementById('user-select');
+        select.innerHTML = '';
+        USERS.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user;
+            option.textContent = user;
+            select.appendChild(option);
+        });
+        // 預設選中 NEIL
+        select.value = currentUser;
+    }
+
+
+    // 初始化儀表板
+    function initDashboard() {
+        feather.replace();
+        initializeUserSelector();
+        updateAllComponents();
+    }
+
+    window.onload = initDashboard;
+</script>
+</body>
+</html>
